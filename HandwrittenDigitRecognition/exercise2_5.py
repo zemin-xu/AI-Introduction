@@ -22,15 +22,29 @@ import numpy as np
 #####################################################################################################################
 
 
-def load_and_test(weights, tests):
-    model = baseline_model(784, 10)
-    model.load_weights(weights)
+def load_and_test(X_test, Y_test):
 
-    Y_pred = model.predict(tests)
-    Y_pred = np.argmax(Y_pred, axis = 1)
+    # TODO - Application 1 - Step 2 - Transform the images to 1D vectors of floats (28x28 pixels  to  784 elements)
+    num_pixels = X_test.shape[1] * X_test.shape[2]
+    X_test = X_test.reshape((X_test.shape[0], num_pixels)).astype('float32')
 
-    # model.predict(tests)
-    print("done")
+    # TODO - Application 1 - Step 3 - Normalize the input values
+    X_test = X_test / 255
+
+    # TODO - Application 1 - Step 4 - Transform the classes labels into a binary matrix
+    Y_test_categ = np_utils.to_categorical(Y_test)
+    num_classes = Y_test_categ.shape[1]
+
+    # Application 1 - Step 5 - Call the baseline_model function
+    model = baseline_model(num_pixels, num_classes)
+
+    model.load_weights('weights.h5')
+
+    temp = model.predict(X_test)
+    Y_pred = np.argmax(temp, axis = 1)
+    print("prediction: ",  Y_pred[:5])
+    print("actual: ", Y_test[:5])
+
 #####################################################################################################################
 #####################################################################################################################
 def baseline_model(num_pixels, num_classes):
@@ -94,8 +108,10 @@ def main():
 
     #TODO - Application 1 - Step 1 - Load the MNIST dataset in Keras
     (X_train, Y_train), (X_test, Y_test) = mnist.load_data()
+    #X_test = X_test[:5]
+    #Y_test = Y_test[:5]
+    load_and_test(X_test,Y_test)
 
-    load_and_test("weights.h5", X_test)
 
 
     #TODO - Application 1 - Step 2 - Train and predict on a MLP

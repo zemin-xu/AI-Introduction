@@ -15,6 +15,8 @@ from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.utils import np_utils
+import keras
+import matplotlib.pyplot as plt
 from keras.layers import Dropout
 from keras.layers import Flatten
 from keras.layers.convolutional import Conv2D
@@ -27,7 +29,7 @@ from keras.layers.convolutional import MaxPooling2D
 
 #####################################################################################################################
 #####################################################################################################################
-def baseline_model(num_pixels, num_classes):
+def baseline_model(num_pixels, num_classes, index):
 
     #Application 1 - Step 5 - Initialize the sequential model
     model = Sequential()
@@ -40,7 +42,10 @@ def baseline_model(num_pixels, num_classes):
     model.add(Dense(num_classes, kernel_initializer='normal', activation='softmax'))
 
     #TODO - Application 1 - Step 6 - Compile the model
-    model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['MeanSquaredError'])
+    if index == 0:
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+    else:
+        model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=[keras.metrics.MeanSquaredError()])
 
     return model
 #####################################################################################################################
@@ -67,15 +72,28 @@ def trainAndPredictMLP(X_train, Y_train, X_test, Y_test):
     num_classes = Y_test.shape[1]
 
     #Application 1 - Step 5 - Call the baseline_model function
-    model = baseline_model(num_pixels, num_classes)
+    model_acc = baseline_model(num_pixels, num_classes, 0)
+    model_mse = baseline_model(num_pixels, num_classes, 1)
 
     #TODO - Application 1 - Step 7 - Train the model
-    model.fit(X_train, Y_train, validation_data=(X_test, Y_test),
+    history_acc = model_acc.fit(X_train, Y_train, validation_data=(X_test, Y_test),
               epochs=10, batch_size=200, verbose=2)
 
+    history_mse = model_mse.fit(X_train, Y_train, validation_data=(X_test, Y_test),
+                                epochs=10, batch_size=200, verbose=2)
+
+    line_acc, = plt.plot(history_acc.epoch, history_acc.history['loss'])
+    line_mse, = plt.plot(history_mse.epoch, history_mse.history['loss'])
+    plt.legend([line_acc, line_mse],
+               ['accuracy', 'mse'])
+    plt.xlabel('epochs')
+    plt.ylabel('loss')
+
+    plt.show()
+
     #TODO - Application 1 - Step 8 - System evaluation - compute and display the prediction error
-    scores = model.evaluate(X_test, Y_test, verbose=0)
-    print("baseline error: {:.2f}".format(100-scores[1]*100))
+    #scores = model.evaluate(X_test, Y_test, verbose=0)
+    #print("baseline error: {:.2f}".format(100-scores[1]*100))
 
     return
 #####################################################################################################################

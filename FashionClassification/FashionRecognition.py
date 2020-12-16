@@ -12,7 +12,6 @@ from keras.layers import Flatten
 from keras.layers import Dropout
 from keras.optimizers import SGD
 from matplotlib import pyplot
-import cv2
 
 #####################################################################################################################
 #####################################################################################################################
@@ -22,18 +21,19 @@ import cv2
 #####################################################################################################################
 def summarizeLearningCurvesPerformances(histories, scores):
 
+    fig, (ax1, ax2) = pyplot.subplots(2, 1)
     for i in range(len(histories)):
         # plot loss
-        pyplot.subplot(211)
-        pyplot.title('Cross Entropy Loss')
-        pyplot.plot(histories[i].history['loss'], color='green', label='train')
-        pyplot.plot(histories[i].history['val_loss'], color='red', label='test')
+        #pyplot.subplot(211)
+        ax1.set_title('Cross Entropy Loss')
+        ax1.plot(histories[i].history['loss'], color='green', label='train')
+        ax1.plot(histories[i].history['val_loss'], color='red', label='test')
 
         # plot accuracy
-        pyplot.subplot(212)
-        pyplot.title('Classification Accuracy')
-        pyplot.plot(histories[i].history['accuracy'], color='green', label='train')
-        pyplot.plot(histories[i].history['val_accuracy'], color='red', label='test')
+        #pyplot.subplot(212)
+        ax2.set_title('Classification Accuracy')
+        ax2.plot(histories[i].history['accuracy'], color='green', label='train')
+        ax2.plot(histories[i].history['val_accuracy'], color='red', label='test')
 
         #print accuracy for each split
         print("Accuracy for set {} = {}".format(i, scores[i]))
@@ -133,13 +133,11 @@ def trainAndEvaluateClassic(trainX, trainY, testX, testY):
 def trainAndEvaluateKFolds(trainX, trainY, testX, testY):
 
     k_folds = 5
-
     scores = []
     histories = []
 
     #Application 2 - Prepare the cross validation datasets
     kfold = KFold(k_folds, shuffle=True, random_state=1)
-
 
     #Enumerate splits
     for train_idx, val_idx in kfold.split(trainX):
@@ -153,7 +151,6 @@ def trainAndEvaluateKFolds(trainX, trainY, testX, testY):
         valX_i = trainX[val_idx]
         valY_i = trainY[val_idx]
 
-
         model = defineModel((28, 28, 1), 10)
 
         #TODO - Application 2 - Step 1 - Fit the model
@@ -161,12 +158,12 @@ def trainAndEvaluateKFolds(trainX, trainY, testX, testY):
 
         #TODO - Application 2 - Step 1 - Evaluate the model on the test dataset
         loss,accuracy = model.evaluate(testX,testY,verbose=1)
-        #print("Accuracy={.2f}%".format(accuracy * 100))
+        print("Accuracy={.2f}%".format(accuracy * 100))
 
         #TODO - Application 2 - Step 1 - Save the accuracy scores in the scores list
         # and the learning history in the histories list
-        scores.append(accuracy)
         histories.append(history)
+        scores.append(accuracy)
 
     return scores, histories
 #####################################################################################################################
@@ -191,11 +188,8 @@ def main():
     #TODO - Application 1 - Step 7 - Train and evaluate the model in the classic way
     #trainAndEvaluateClassic(trainX,trainY, testX, testY)
 
-
     #TODO - Application 2 Train and evaluate the model using K-Folds strategy
-    histories, scores = trainAndEvaluateKFolds(trainX, trainY, testX,testY)
-
-
+    scores, histories= trainAndEvaluateKFolds(trainX, trainY, testX,testY)
 
     #Application 2 - Step2 - System performance presentation
     summarizeLearningCurvesPerformances(histories, scores)

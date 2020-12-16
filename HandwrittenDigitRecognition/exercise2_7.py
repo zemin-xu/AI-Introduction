@@ -1,14 +1,3 @@
-# Exercise 7:
-# Modify  the  number  of  neurons  on  the  dense hidden  layer  as
-# specified  in  Table  4. Select a value  of  3x3  neurons  for
-# convolutional  kernel.  What  can  be  observed  regarding  the  system  accuracy?
-# How about the convergence time necessary for the system to train a model?
-
-# Answer:
-# num neurons           16       64         128     256      512
-# system accuracy     0.9606    0.9734     0.9790   0.9822  0.9851
-# time per step(ms)     15        16         17        19      25
-
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense
@@ -17,6 +6,21 @@ from keras.layers import Dropout
 from keras.layers import Flatten
 from keras.layers.convolutional import Conv2D
 from keras.layers.convolutional import MaxPooling2D
+import matplotlib.pyplot as plt
+
+import keras
+import time
+import numpy as np
+
+class TimeHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self.times = []
+
+    def on_epoch_begin(self, epoch, logs={}):
+        self.epoch_time_start = time.time()
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.times.append(time.time() - self.epoch_time_start)
 
 def baseline_model(num_pixels, num_classes):
 
@@ -65,7 +69,7 @@ def trainAndPredictMLP(X_train, Y_train, X_test, Y_test):
 
     return
 
-def CNN_model(input_shape, num_classes):
+def CNN_model(input_shape, num_classes, num_neuron):
 
     # Application 2 - Step 6 - Initialize the sequential model
     model = Sequential()
@@ -84,7 +88,7 @@ def CNN_model(input_shape, num_classes):
     model.add(Flatten(input_shape=input_shape))
 
     #TODO - Application 2 - Step 6 - Define a dense layer of size 128
-    model.add(Dense(128, activation='relu'))
+    model.add(Dense(num_neuron, activation='relu'))
 
     #TODO - Application 2 - Step 6 - Define the output layer
     model.add(Dense(num_classes, activation='softmax'))
@@ -113,19 +117,50 @@ def trainAndPredictCNN(X_train, Y_train, X_test, Y_test):
     Y_test = np_utils.to_categorical(Y_test)
     num_classes = Y_test.shape[1]
 
-    #Application 2 - Step 6 - Call the cnn_model function
-    model = CNN_model((28,28,1), num_classes)
 
-    #TODO - Application 2 - Step 8 - Train the model
-    model.fit(X_train, Y_train, validation_data=(X_test, Y_test),
-              epochs=5, batch_size=200)
+    time_callback = TimeHistory()
+    times = []
 
-    #TODO - Application 2 - Step 8 - System evaluation - compute and display the prediction error
-    scores = model.evaluate(X_test,Y_test, verbose=0)
+    nums_neuron = [16, 64, 128, 256, 512]
+    histories = []
+
+    for i in range(len(nums_neuron)):
+        #Application 2 - Step 6 - Call the cnn_model function
+        model = CNN_model((28,28,1), num_classes, nums_neuron[i])
+
+        #TODO - Application 2 - Step 8 - Train the model
+        history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test),
+              epochs=5, callbacks=[time_callback],  batch_size=200)
+
+        for j in range(len(history.epoch)):
+            history.epoch[j] = history.epoch[j] + 1
+        times.append(time_callback.times)
+
+        histories.append(history)
+
+        #TODO - Application 2 - Step 8 - System evaluation - compute and display the prediction error
+        #scores = model.evaluate(X_test,Y_test, verbose=0)
+
+    line0, = plt.plot(histories[0].epoch, histories[0].history['accuracy'])
+    line1, = plt.plot(histories[1].epoch, histories[1].history['accuracy'])
+    line2, = plt.plot(histories[2].epoch, histories[2].history['accuracy'])
+    line3, = plt.plot(histories[3].epoch, histories[3].history['accuracy'])
+    line4, = plt.plot(histories[4].epoch, histories[4].history['accuracy'])
+    plt.legend([line0, line1, line2, line3, line4],
+               [nums_neuron[0], nums_neuron[1], nums_neuron[2], nums_neuron[3], nums_neuron[4]])
+    plt.xlabel('epochs')
+    plt.ylabel('accuracy')
+
+    plt.show()
+
+
+    for i in range(len(times)):
+        mean = np.mean(times[i])
+        print("the average time for each epoch in case: ",nums_neuron[i], " of neuron is: ", mean)
 
     # the error will be different because the initialization is random
     # it depends on the subset of training data being selected
-    print("CNN Error: {:.2f}".format(100 - scores[1] * 100))
+    #print("CNN Error: {:.2f}".format(100 - scores[1] * 100))
 
     return
 
@@ -135,7 +170,7 @@ def main():
     (X_train, Y_train), (X_test, Y_test) = mnist.load_data()
 
     #TODO - Application 1 - Step 2 - Train and predict on a MLP
-    trainAndPredictMLP(X_train, Y_train,X_test,Y_test)
+    #trainAndPredictMLP(X_train, Y_train,X_test,Y_test)
 
     #TODO - Application 2 - Train and predict on a CNN
     trainAndPredictCNN(X_train, Y_train,X_test,Y_test)

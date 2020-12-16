@@ -1,20 +1,24 @@
-# Exercise 1:
-# Modify the number of neurons on the hidden layer as specified in Table 1. What can be
-#observed regarding the system accuracy? How about the convergence time necessary for the system to
-# train a model?
 
-# system performance evaluation
-# num_neuron        8       16      32      64      128
-# sys_accuracy      0.9233  0.9469  0.9659  0.9825  0.9913
 
 from keras.datasets import mnist
 from keras.models import Sequential
 from keras.layers import Dense
 from keras.utils import np_utils
-from keras.layers import Dropout
-from keras.layers import Flatten
-from keras.layers.convolutional import Conv2D
-from keras.layers.convolutional import MaxPooling2D
+import matplotlib.pyplot as plt
+
+import keras
+import time
+import numpy as np
+
+class TimeHistory(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self.times = []
+
+    def on_epoch_begin(self, epoch, logs={}):
+        self.epoch_time_start = time.time()
+
+    def on_epoch_end(self, epoch, logs={}):
+        self.times.append(time.time() - self.epoch_time_start)
 
 #####################################################################################################################
 #####################################################################################################################
@@ -22,7 +26,7 @@ from keras.layers.convolutional import MaxPooling2D
 
 #####################################################################################################################
 #####################################################################################################################
-def baseline_model(num_pixels, num_classes):
+def baseline_model(num_pixels, num_classes, num_neuron):
 
     #Application 1 - Step 5 - Initialize the sequential model
     model = Sequential()
@@ -30,11 +34,11 @@ def baseline_model(num_pixels, num_classes):
     #TODO - Application 1 - Step 5 - build a standard feed-forward network with one dense hidden layer(with 8 neurons) and one dense output layer
     # three hidden layers will be enough for all application
     # num of neuron from 1 to 1024
-    model.add(Dense(128, input_dim=num_pixels, kernel_initializer='normal',
-                    activation='relu'))
+    model.add(Dense(num_neuron, input_dim=num_pixels, kernel_initializer='normal',
+                     activation='relu'))
     model.add(Dense(num_classes, kernel_initializer='normal', activation='softmax'))
 
-    #TODO - Application 1 - Step 6 - Compile the model
+     #TODO - Application 1 - Step 6 - Compile the model
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
 
     return model
@@ -61,16 +65,41 @@ def trainAndPredictMLP(X_train, Y_train, X_test, Y_test):
     Y_test = np_utils.to_categorical(Y_test)
     num_classes = Y_test.shape[1]
 
+    time_callback = TimeHistory()
+    times = []
+    nums_neuron = [8, 16, 32, 64, 128]
+    histories = []
     #Application 1 - Step 5 - Call the baseline_model function
-    model = baseline_model(num_pixels, num_classes)
+    for i in range(len(nums_neuron)):
+        model = baseline_model(num_pixels, num_classes, nums_neuron[i])
 
     #TODO - Application 1 - Step 7 - Train the model
-    model.fit(X_train, Y_train, validation_data=(X_test, Y_test),
-              epochs=10, batch_size=100, verbose=2)
+        history = model.fit(X_train, Y_train, validation_data=(X_test, Y_test),
+              epochs=10, batch_size=100, callbacks=[time_callback], verbose=2)
+        for j in range(len(history.epoch)):
+            history.epoch[j] = history.epoch[j] + 1
+        times.append(time_callback.times)
 
+        histories.append(history)
     #TODO - Application 1 - Step 8 - System evaluation - compute and display the prediction error
-    scores = model.evaluate(X_test, Y_test, verbose=0)
-    print("baseline error: {:.2f}".format(100-scores[1]*100))
+        scores = model.evaluate(X_test, Y_test, verbose=0)
+        #res.append(scores[1])
+        #print("baseline error: {:.2f}".format(100 - scores[1] * 100))
+
+    line0, = plt.plot(histories[0].epoch, histories[0].history['accuracy'])
+    line1, = plt.plot(histories[1].epoch, histories[1].history['accuracy'])
+    line2, = plt.plot(histories[2].epoch, histories[2].history['accuracy'])
+    line3, = plt.plot(histories[3].epoch, histories[3].history['accuracy'])
+    line4, = plt.plot(histories[4].epoch, histories[4].history['accuracy'])
+    plt.legend([line0, line1,line2,line3,line4],
+               [nums_neuron[0], nums_neuron[1], nums_neuron[2], nums_neuron[3], nums_neuron[4]])
+    plt.xlabel('epochs')
+    plt.ylabel('accuracy')
+    plt.show()
+
+    for i in range(len(times)):
+        mean = np.mean(times[i])
+        print("the average time for each epoch in case: ",nums_neuron[i], " of neuron is: ", mean)
 
     return
 #####################################################################################################################

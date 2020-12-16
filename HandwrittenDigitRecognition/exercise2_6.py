@@ -72,7 +72,7 @@ def CNN_model(input_shape, num_classes):
     model = Sequential()
 
     #TODO - Application 2 - Step 6 - Create the first hidden layer as a convolutional layer
-    model.add(Conv2D(8, (9,9), input_shape=input_shape,
+    model.add(Conv2D(8, (3,3), input_shape=input_shape,
                     activation='relu'))
 
     #TODO - Application 2 - Step 6 - Define the pooling layer

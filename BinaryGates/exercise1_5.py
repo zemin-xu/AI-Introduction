@@ -62,7 +62,7 @@ def main():
     biasLayer2 = np.random.uniform(size=(1, noNeuronsLayer2))
 
 
-    noEpochs = 500
+    noEpochs = 5000
     learningRate = 0.3
 
 
