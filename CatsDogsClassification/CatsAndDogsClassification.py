@@ -179,6 +179,7 @@ def defineCNNModelVGGPretrained():
     baseModel = VGG16(weights='imagenet', include_top=False, input_shape=(150,150,3))
 
     #TODO - Exercise 6 - Visualize the network arhitecture (list of layers)
+    baseModel.summary()
 
     #TODO - Exercise 6 - Freeze the baseModel layers to not to allow training
     for layer in baseModel.layers:
